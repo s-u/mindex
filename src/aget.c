@@ -119,10 +119,36 @@ SEXP ascii_index(SEXP sMmap, SEXP sIndex, SEXP sSep, SEXP sI, SEXP sJ) {
 	ix_i = INTEGER(sIndex);
     }
     iN = LENGTH(sIndex);
+    if (!iN) Rf_error("Invalid (empty) index");
     if (TYPEOF(sSep) == STRSXP && LENGTH(sSep) && CHAR(STRING_ELT(sSep, 0))[0])
 	sep = (int) (unsigned char) CHAR(STRING_ELT(sSep, 0))[0];
-    sJ = PROTECT(coerceVector(sJ, INTSXP));
+    if (sI == R_NilValue) {
+	int *ii = INTEGER(sI = allocVector(INTSXP, iN - 1));
+	for (i = 0; i < iN - 1; i++)
+	    ii[i] = i + 1;
+    }
     sI = PROTECT(coerceVector(sI, INTSXP));
+    if (sJ == R_NilValue) {
+	if (iN == 1)
+	    sJ = allocVector(INTSXP, 0);
+	else { /* we have to count the fields in the first line */
+	    unsigned long i0 = (unsigned long) (iix ? ix_i[0] : ix_d[0]);
+	    unsigned long i1 = (unsigned long) (iix ? ix_i[1] : ix_d[1]);
+            const char *c = mem + i0, *e = mem + i1;
+	    int fs = 0, *jj;
+            while (c < e) {
+                const char *ce = memchr(c, sep, e - c);
+                if (!ce)
+                    ce = e;
+                fs++;
+                c = ce + 1;
+            }
+	    jj = INTEGER(sJ = allocVector(INTSXP, fs));
+	    for (i = 0; i < fs; i++)
+		jj[i] = i + 1;
+	}
+    }
+    sJ = PROTECT(coerceVector(sJ, INTSXP));
     nJ = LENGTH(sJ);
     J = INTEGER(sJ);
     I = INTEGER(sI);
