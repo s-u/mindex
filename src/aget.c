@@ -98,6 +98,36 @@ SEXP slurp_(SEXP sFN, SEXP sType) {
     return R_NilValue;
 }
 
+SEXP mkindex(SEXP sFN, SEXP sIFN) {
+    const char *ofn = CHAR(STRING_ELT(sIFN, 0));
+    FILE *out;
+    unsigned long l = 0;
+    size_t sz;
+    const char *mem = map__(sFN, &sz), *end = mem + sz, *c;
+    
+    out = fopen(ofn, "wb");
+    if (!out) {
+        munmap((void*)mem, sz);
+        Rf_error("ERROR: cannot create `%s'", ofn);
+    }
+    c = mem;
+    while (c < end) {
+	l = (unsigned long) (c - mem);
+        fwrite(&l, sizeof(l), 1, out);
+	c = memchr(c, '\n', end - c);
+	if (!c) break;
+	c++;
+    }
+    l = (unsigned long) (end - mem);
+    /* if the trailing newline is missing, add one
+       since the next record cannot start here */
+    if (end > mem && end[-1] != '\n') l++;
+    fwrite(&l, sizeof(l), 1, out);
+    fclose(out);
+    munmap((void*)mem, sz);
+    return ScalarReal(l);
+}
+
 SEXP ascii_index(SEXP sMmap, SEXP sIndex, SEXP sSep, SEXP sI, SEXP sJ) {
     int sep = '|';
     const char *mem;

@@ -1,3 +1,5 @@
 useDynLib(mindex, slurp_, map_file, ascii_index, mkindex)
 export(slurp, map.file, ascii.index, mindex)
 S3method(`[`, mindexf)
+S3method(dim, mindexf)
+S3method(names, mindexf)
