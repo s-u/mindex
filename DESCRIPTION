@@ -1,0 +1,9 @@
+Package: mindex
+Version: 0.1-1
+Title: Fast indexing of data files that don't fit into memory
+Author: Simon Urbanek <simon.urbanek@r-project.org>
+Maintainer: Simon Urbanek <simon.urbanek@r-project.org>
+Depends: R (>= 2.0.0)
+Description: This package provides functions that allow to memory-map files and index them from R.
+License: MIT
+URL: http://www.rforge.net/mindex
