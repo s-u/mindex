@@ -51,6 +51,50 @@ SEXP map_file(SEXP sFN) {
     return res;
 }
 
+static const char *bs(const char *mem, size_t left, size_t right, const char *what, size_t kl, size_t rl) {
+    while (right > left) {
+	size_t mid = (left + right) >> 1;
+	const char *midm = mem + mid * rl;
+	int c = memcmp(midm, what, kl);
+	if (c == 0) return midm;
+	if (c < 0) left = mid + 1;
+	else right = mid - 1;
+    }
+    if (left == right && !memcmp(mem + left * rl, what, kl)) return mem + left * rl;
+    return 0;
+}
+
+SEXP bin_srch(SEXP sMap, SEXP sWhat, SEXP sKeyLen, SEXP sRowLen, SEXP sSepLen, SEXP sTraiLen, SEXP sNA) {
+    size_t keylen = asInteger(sKeyLen);
+    size_t rowlen = asInteger(sRowLen);
+    size_t seplen = asInteger(sSepLen);
+    size_t trlen  = asInteger(sTraiLen);
+    if (TYPEOF(sWhat) != STRSXP)
+	Rf_error("what is expected to be a character vector");
+    if (TYPEOF(sMap) != EXTPTRSXP || TYPEOF(EXTPTR_PROT(sMap)) != REALSXP)
+	Rf_error("invalid mmap object");
+    
+    SEXP NAstr = (TYPEOF(sNA) == STRSXP && LENGTH(sNA) == 1) ? STRING_ELT(sNA, 0) : NA_STRING;
+    size_t n = XLENGTH(sWhat);
+    SEXP res = PROTECT(allocVector(STRSXP, n));
+    
+    const char *mem = (const char*) EXTPTR_PTR(sMap);
+    size_t len = (size_t) REAL(EXTPTR_PROT(sMap))[0];
+    size_t i = 0;
+
+    while (i < n) {
+	const char *w = CHAR(STRING_ELT(sWhat, i));
+	const char *rr = bs(mem, 0, (len / rowlen) - 1, w, keylen, rowlen);
+	if (rr)
+	    SET_STRING_ELT(res, i, mkCharLen(rr + keylen + seplen, rowlen - keylen - seplen - trlen));
+	else
+	    SET_STRING_ELT(res, i, NAstr);
+	i++;
+    }
+    UNPROTECT(1);
+    return res;
+}
+
 SEXP slurp_(SEXP sFN, SEXP sType) {
     SEXP res;
     size_t sz, i;

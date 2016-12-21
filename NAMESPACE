@@ -1,5 +1,5 @@
-useDynLib(mindex, slurp_, map_file, ascii_index, mkindex)
-export(slurp, map.file, ascii.index, mindex)
+useDynLib(mindex, slurp_, map_file, ascii_index, mkindex, bin_srch)
+export(slurp, map.file, ascii.index, mindex, bin.search)
 S3method(`[`, mindexf)
 S3method(dim, mindexf)
 S3method(names, mindexf)
